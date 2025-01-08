@@ -49,12 +49,41 @@ Array *createArray(int *shape, int ndim)
     return array;
 }
 
+void addArrays(Array *a, Array *b, Array *result)
+{
+    if (a->ndim == b->ndim) {
+        if (a->size == b->size) {
+            for (int i = 0; i < a->size; i++) {
+                result->data[i] = a->data[i] + b->data[i];
+            }
+        } else {
+             // Handle Broadcasting
+             if (b->size == 1) {
+                for (int i = 0; i < a->size; i++)
+                    result->data[i] = a->data[i] + b->data[0];
+             } else if (a->size == 1) {
+                for (int i = 0; i < b->size; i++) 
+                    result->data[i] = a->data[0] + b->data[i];
+             }
+        } 
+    } else {
+        // If sizes do not match and no broadcasting applies
+        fprintf(stderr, "Error: Arrays are not broadcastable or incompatible sizes.\n");
+        return;
+    }
+}
+
 void randInit(Array *array, int low, int high)
 {
     for (int i = 0; i < array->size; i++)
         array->data[i] = low + rand() % (high - low + 1);
 }
 
+void zeroInit(Array *array)
+{
+    for (int i = 0; i < array->size; i++) 
+        array->data[i] = 0.0;
+}
 
 void printArrayRecursive(Array *array, int *indices, int ndim, int dimIndex) 
 {
@@ -101,19 +130,30 @@ int main()
 
     int shape[3] = {2, 3, 4};
     int ndim = 3;
-
+    
+    // Test Init
     Array *arr = createArray(shape, ndim);
     randInit(arr, 0, 4);
+
+    // Addition Test 1: Same dimensions
+    Array *a = createArray(shape, ndim);
+    Array *b = createArray(shape, ndim);
+    Array *result = createArray(shape, ndim);
+
+    randInit(a, 2, 2);   // Initialize every element to be 2
+    randInit(b, 3, 3);   // Initialize every element to be 3
+    zeroInit(result);
+
+    addArrays(a, b, result);
     
-    /** Debugging purpose
-    for (int i = 0; i < arr->size; i++) {
-        printf("%.1f ", arr->data[i]);
+    // Debugging purpose
+    for (int i = 0; i < result->size; i++) {
+        printf("%.1f ", result->data[i]);
     }
     printf("\n");
     printf("\n");
-    **/
 
-    printArray(arr);
+    printArray(result);
 
     free(arr->data);
     free(arr->strides);
