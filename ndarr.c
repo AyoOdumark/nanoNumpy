@@ -85,6 +85,42 @@ void zeroInit(Array *array)
         array->data[i] = 0.0;
 }
 
+void matmul(Array *a, Array *b, Array *res)
+{
+    if (a->ndim < 2 || b->ndim < 2) {
+        perror("Both arrays must have at least 2 dimensions for matrix multiplication");
+        exit(EXIT_FAILURE);
+    }
+
+    // Check if last dim in a is equal to the second-last dim in b
+    if (a->shape[a->ndim - 1] != b->shape[b->ndim -2]) {
+        perror("Last dim of first array must match second-last dim of second array");
+        exit(EXIT_FAILURE);
+    }
+
+    int row = a->shape[a->ndim - 2];
+    int col = b->shape[b->ndim - 2];
+    int inner = a->shape[a->ndim - 1];
+
+    // Assumption is that Array *res has been checked to ensure the right shape
+    if (a->ndim == 2 && b->ndim == 2) {
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                float tmp = 0.0;
+                for (int k = 0; k < inner; k++) {
+                    int idx_a = i * a->strides[0] + k * a->strides[1];
+                    int idx_b = k * a->strides[0] + j * b->strides[1];
+                    tmp += a->data[idx_a] * b->data[idx_b];
+                }
+                int idx_res = i * res->strides[0] + j * res->strides[1];
+                res->data[idx_res] = tmp;
+            }
+        }
+    }
+
+    // TODO: Add code for ndim > 2
+}
+
 void printArrayRecursive(Array *array, int *indices, int ndim, int dimIndex) 
 {
     // Base case: if we reached the last dimension, print the element
